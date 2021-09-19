@@ -1,0 +1,4 @@
+name = "Yggdrasil"
+uuid = "712c5d6a-8dc6-4f40-abc5-a4d1c7fea1b8"
+authors = ["Juan Pablo Ossa Zapata <ozjuanpa@gmail.com>"]
+version = "0.1.0"
