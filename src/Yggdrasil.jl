@@ -1,5 +1,9 @@
 module Yggdrasil
 
+macro set(node,key,value)
+    esc(:($node = set($node, $key, $value)))
+end
+
 struct YggdrasilNode
     tail::Union{Nothing,YggdrasilNode}
     key::Any
@@ -30,6 +34,6 @@ function set(node::YggdrasilNode,key::Any,value::Any)::YggdrasilNode
     )
 end
 
-export YggdrasilNode,get,set
+export YggdrasilNode,get,set,@set
 
 end # module
