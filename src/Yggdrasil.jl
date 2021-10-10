@@ -22,11 +22,11 @@ function buildyggexpr(inputexpr)
             prevvarname = i == 2 ? indices[i-1] : "$(indices[i-1])$(i-1)"
             prevsymbol = i==2 ? esc(Symbol(prevvarname)) : Symbol(prevvarname)
             if i == length(indices)
-                myexpr = :($(prevsymbol)=set($(prevsymbol),
+                myexpr = :($(prevsymbol)=setindex($(prevsymbol),
                     $(indices[i]),$(esc(inputexpr.args[2]))))
                 push!(blockargs,myexpr)
             else
-                myexpr = :($(Symbol(varname))=get($(prevsymbol),
+                myexpr = :($(Symbol(varname))=getindex($(prevsymbol),
                     $(indices[i])))
                 push!(blockargs,myexpr)
             end
@@ -36,7 +36,7 @@ function buildyggexpr(inputexpr)
             varname = "$(indices[i])$i"
             prevvarname = i == 2 ? indices[i-1] : "$(indices[i-1])$(i-1)"
             prevsymbol = i==2 ? esc(Symbol(prevvarname)) : Symbol(prevvarname)
-            myexpr = :($(prevsymbol)=set($(prevsymbol),
+            myexpr = :($(prevsymbol)=setindex($(prevsymbol),
                 $(indices[i]),$(Symbol(varname))))
             push!(blockargs,myexpr)
         end
@@ -51,7 +51,7 @@ function buildyggexpr(inputexpr)
             varname = "$(indices[i])$i"
             prevvarname = i == 2 ? indices[i-1] : "$(indices[i-1])$(i-1)"
             prevsymbol = i==2 ? esc(Symbol(prevvarname)) : Symbol(prevvarname)
-            myexpr = :($(Symbol(varname))=get($(prevsymbol),
+            myexpr = :($(Symbol(varname))=getindex($(prevsymbol),
                 $(indices[i])))
             push!(blockargs,myexpr)
         end
@@ -73,24 +73,38 @@ root = YggdrasilNode(nothing,nothing,nothing)
 
 YggdrasilNode() = root
 
-function get(node::YggdrasilNode,key::Any)::Any
+function getindex(node::YggdrasilNode,key::Any)::Any
+    if isnothing(key)
+        error("Cannot use nothing as key for YggdrasilNode")
+    end
     if node.key == key
         return node.value
     else
         if isnothing(node.tail)
             throw(KeyError(key))
         else
-            return get(node.tail,key)
+            return getindex(node.tail,key)
         end
     end
 end
 
-function set(node::YggdrasilNode,key::Any,value::Any)::YggdrasilNode
+function setindex(node::YggdrasilNode,key::Any,value::Any)::YggdrasilNode
+    if isnothing(key)
+        error("Cannot use nothing as key for YggdrasilNode")
+    end
     YggdrasilNode(
         node,
         key,
         value
     )
+end
+
+function length(node::YggdrasilNode;visited=Set())
+    if isnothing(node.key)
+        return length(visited)
+    else
+        length(node.tail,visited=push!(visited,node.key))
+    end
 end
 
 function printnode(io::IO,node::YggdrasilNode;depth=0,visited=Set())
@@ -119,8 +133,6 @@ function printnode(io::IO,node::YggdrasilNode;depth=0,visited=Set())
     end
 end
 
-#Base.show(io::IO, node::YggdrasilNode) = printnode(io,node)
-# this is used to show values in the REPL and when using IJulia
 Base.show(io::IO, m::MIME"text/plain", node::YggdrasilNode) = printnode(io,node)
 
 export YggdrasilNode,get,set,@ygg
